@@ -17,7 +17,7 @@ current_state = 0
 b = -1
 bf = 0
 bit1 = False
-paq = False
+paq_lost = 0
 
 def FSM(byte):
     switch = {
@@ -34,11 +34,10 @@ def realigning_bit(byte):
         print('realigning_bit:   ', byte,'     bit ', b)
         global current_state
         current_state = REALIGNING_FRAME
-    return False
 
 def realigning_frame(byte):
     global current_state, b
-    global paq, bit1
+    global bit1
 
     print('realigning_frame: ', byte, '     bit ', bf)
     
@@ -47,6 +46,7 @@ def realigning_frame(byte):
         else: current_state = REALIGNING_BIT
 
     elif byte == PAQ1 or byte == PAQ2:
+        bit1 = False
         current_state = ALIGNED
     else:
         current_state = REALIGNING_BIT
@@ -54,7 +54,14 @@ def realigning_frame(byte):
 
 def aligned(byte):
     print('aligned:          ', byte, '     bit ', bf)
-    return False
+    global paq_lost, current_state
+    if byte != PAQ1 and byte != PAQ2:
+        paq_lost += 1
+        if paq_lost == 3:
+            print('===== LOST =====')
+            current_state = REALIGNING_BIT
+            paq_lost = 0
+    else: paq_lost = 0
 
 
 if __name__ == '__main__':
@@ -109,7 +116,8 @@ if __name__ == '__main__':
                 bf +=LENGTH_FRAME
                 byte = s[bf :bf + 8]
         elif current_state == ALIGNED:
-            bf += 2*LENGTH_FRAME
+            bf += 2 * LENGTH_FRAME
+            b = bf
             byte = s[bf:bf + 8]
 
         if len(byte) < 8:
