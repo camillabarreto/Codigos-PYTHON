@@ -36,7 +36,7 @@ def realigning_bit(byte):
         current_state = REALIGNING_FRAME
 
 def realigning_frame(byte):
-    global current_state, b
+    global current_state
     global bit1
 
     print('realigning_frame: ', byte, '     bit ', bf)
@@ -48,6 +48,7 @@ def realigning_frame(byte):
     elif byte == PAQ1 or byte == PAQ2:
         bit1 = False
         current_state = ALIGNED
+        print('===== ALIGNED =====')
     else:
         current_state = REALIGNING_BIT
         bit1 = False
@@ -101,8 +102,8 @@ if __name__ == '__main__':
     print('\n\nINICIANDO ALGORITMO\n\n')
 
     s = arq.readline()
-    global b
-    global bf
+    b = 0
+    bf = -1
     result = False
     while (not result):
         if current_state == REALIGNING_BIT:
@@ -126,38 +127,3 @@ if __name__ == '__main__':
         result = FSM(byte)
     
     print('\n\nFIM DO ARQUIVO\n\n')
-
-
-
-
-
-
-
-
-
-
- # Conversion : string to bytes
-
-    # s = arq.readline()
-    # base = 128
-    # x = 0
-    # raw = bytearray()
-    # for i in range(0, len(s)):
-    #     if s[i] == '1':
-    #         x += base
-    #     base = int(base / 2)
-    #     if base == 0:
-    #         raw.append(x)
-    #         base = 128
-    #         x = 0
-
-    # Comparing with PAQ
-
-    # sys.exit(0)
-    # for i in range(0,len(s)-8):
-    #     # print('BYTE: ', bin(i))
-    #     x = s[i:i+8]
-    #     # print(x)
-    #     if x == PAQ1 or x == PAQ2:
-    #         print('BYTE: ', x)
-    #         print(i)
