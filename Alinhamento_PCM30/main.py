@@ -12,6 +12,13 @@ REALIGNING_BIT = 0
 REALIGNING_FRAME = 1
 ALIGNED = 2
 
+# Colors
+RED = '\033[41m'
+YELLOW = '\033[43m'
+GREEN = '\033[42m'
+BLUE = '\033[44m'
+RST = '\033[0;0m'
+
 # Global Variables
 current_state = 0
 b = -1
@@ -26,20 +33,18 @@ def FSM(byte):
         ALIGNED: aligned
     }
     # Executa a função do estado atual
-    func = switch.get(current_state, lambda: None)
+    func = switch[current_state]
     return func(byte)
 
 def realigning_bit(byte):
     if byte == PAQ1 or byte == PAQ2:
-        print('realigning_bit:   ', byte,'     bit ', b)
+        print(BLUE+'STATE realigning_bit:   ', byte,'     bit ', b, RST)
         global current_state
         current_state = REALIGNING_FRAME
 
 def realigning_frame(byte):
     global current_state
     global bit1
-
-    print('realigning_frame: ', byte, '     bit ', bf)
     
     if not bit1:
         if byte[1] == '1': bit1 = True
@@ -48,21 +53,35 @@ def realigning_frame(byte):
     elif byte == PAQ1 or byte == PAQ2:
         bit1 = False
         current_state = ALIGNED
-        print('===== ALIGNED =====')
+        print(GREEN+'STATE realigning_frame: ', byte, '     bit ', bf, RST)
+        print("FRAME(",b,"): ", s[b:b+LENGTH_FRAME])
+        print("FRAME(",b+LENGTH_FRAME,"):", s[b+LENGTH_FRAME:b+(2*LENGTH_FRAME)])
+        return
+        
     else:
         current_state = REALIGNING_BIT
         bit1 = False
+    
+    print('STATE realigning_frame: ', byte, '     bit ', bf)
 
 def aligned(byte):
-    print('aligned:          ', byte, '     bit ', bf)
     global paq_lost, current_state
     if byte != PAQ1 and byte != PAQ2:
         paq_lost += 1
         if paq_lost == 3:
-            print('===== LOST =====')
+            print(RED+'STATE aligned:          ', byte, '     bit ', bf, RST)
             current_state = REALIGNING_BIT
             paq_lost = 0
-    else: paq_lost = 0
+        else:
+            print(YELLOW+'STATE aligned:          ', byte, '     bit ', bf, RST)
+            print("FRAME(",b,"):", s[b:b+LENGTH_FRAME])
+            print("FRAME(",b+LENGTH_FRAME,"): ", s[b+LENGTH_FRAME:b+(2*LENGTH_FRAME)])
+    else:
+        print(GREEN+'STATE aligned:          ', byte, '     bit ', bf, RST)
+        print("FRAME(",b,"):", s[b:b+LENGTH_FRAME])
+        print("FRAME(",b+LENGTH_FRAME,"):", s[b+LENGTH_FRAME:b+(2*LENGTH_FRAME)])
+        paq_lost = 0
+
 
 
 if __name__ == '__main__':
@@ -97,6 +116,14 @@ if __name__ == '__main__':
         print('Não conseguiu acessar arquivo', e)
         sys.exit(0)
    
+
+    # Instructions
+
+    print('\n\nSINALIZAÇÃO DE CORES\n\n')
+    print('+ '+BLUE,'AZUL    ',RST+" : possível início de quadro")
+    print('+ '+GREEN,'VERDE   ',RST+" : confirmado início de quadro")
+    print('+ '+RED,'VERMELHO',RST+" : perdeu alinhamento")
+
     # State Machine
 
     print('\n\nINICIANDO ALGORITMO\n\n')
@@ -117,8 +144,8 @@ if __name__ == '__main__':
                 bf +=LENGTH_FRAME
                 byte = s[bf :bf + 8]
         elif current_state == ALIGNED:
-            bf += 2 * LENGTH_FRAME
             b = bf
+            bf += 2 * LENGTH_FRAME
             byte = s[bf:bf + 8]
 
         if len(byte) < 8:
